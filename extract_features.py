@@ -32,16 +32,18 @@ from pytorch_i3d import InceptionI3d
 from charades_dataset_full import Charades as Dataset
 
 
-def run(max_steps=64e3, mode='rgb', root='/ssd2/charades/Charades_v1_rgb', split='charades/charades.json', batch_size=1, load_model='', save_dir=''):
+def run(max_steps=64e3, mode='rgb', root='/ssd2/charades/Charades_v1_rgb', split='./charades/charades.json', batch_size=1, load_model='', save_dir=''):
     # setup dataset
     test_transforms = transforms.Compose([videotransforms.CenterCrop(224)])
 
     dataset = Dataset(split, 'training', root, mode, test_transforms, num=-1, save_dir=save_dir)
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=8, pin_memory=True)
-
+    print('training data read')
+    
     val_dataset = Dataset(split, 'testing', root, mode, test_transforms, num=-1, save_dir=save_dir)
     val_dataloader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, shuffle=True, num_workers=8, pin_memory=True)    
-
+    print('validation data read')
+    
     dataloaders = {'train': dataloader, 'val': val_dataloader}
     datasets = {'train': dataset, 'val': val_dataset}
 
@@ -54,8 +56,10 @@ def run(max_steps=64e3, mode='rgb', root='/ssd2/charades/Charades_v1_rgb', split
     i3d.replace_logits(157)
     i3d.load_state_dict(torch.load(load_model))
     i3d.cuda()
+    print('model set')
 
     for phase in ['train', 'val']:
+        print('starting phase', phase)
         i3d.train(False)  # Set model to evaluate mode
                 
         tot_loss = 0.0
@@ -67,6 +71,7 @@ def run(max_steps=64e3, mode='rgb', root='/ssd2/charades/Charades_v1_rgb', split
             # get the inputs
             inputs, labels, name = data
             if os.path.exists(os.path.join(save_dir, name[0]+'.npy')):
+                print('features of ', name, 'already exist... omitting')
                 continue
 
             b,c,t,h,w = inputs.shape
@@ -77,11 +82,13 @@ def run(max_steps=64e3, mode='rgb', root='/ssd2/charades/Charades_v1_rgb', split
                     start = max(1, start-48)
                     ip = Variable(torch.from_numpy(inputs.numpy()[:,:,start:end]).cuda(), volatile=True)
                     features.append(i3d.extract_features(ip).squeeze(0).permute(1,2,3,0).data.cpu().numpy())
-                np.save(os.path.join(save_dir, name[0]), np.concatenate(features, axis=0))
+                print('saving', name[0])
+                np.save(os.path.join(save_dir, name[0]), np.concatenate(features, axis=0))                
             else:
                 # wrap them in Variable
                 inputs = Variable(inputs.cuda(), volatile=True)
                 features = i3d.extract_features(inputs)
+                print('saving', name[0])
                 np.save(os.path.join(save_dir, name[0]), features.squeeze(0).permute(1,2,3,0).data.cpu().numpy())
 
 

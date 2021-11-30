@@ -41,8 +41,13 @@ def load_rgb_frames(image_dir, vid, start, num):
 def load_flow_frames(image_dir, vid, start, num):
   frames = []
   for i in range(start, start+num):
+    if not os.path.isfile(os.path.join(image_dir, vid, vid+'-'+str(i).zfill(6)+'x.jpg')) :
+        #print('corrupt dataset: some frames of', vid, 'are missing')
+        raise Exception('Corrupt dataset, some frames of '+ vid + ' are missing') 
+    
     imgx = cv2.imread(os.path.join(image_dir, vid, vid+'-'+str(i).zfill(6)+'x.jpg'), cv2.IMREAD_GRAYSCALE)
     imgy = cv2.imread(os.path.join(image_dir, vid, vid+'-'+str(i).zfill(6)+'y.jpg'), cv2.IMREAD_GRAYSCALE)
+    
     
     w,h = imgx.shape
     if w < 224 or h < 224:
@@ -69,8 +74,17 @@ def make_dataset(split_file, split, root, mode, num_classes=157):
             continue
 
         if not os.path.exists(os.path.join(root, vid)):
+        #if not os.path.exists(os.path.join(root, vid)+'.mp4'):
             continue
+        print('reading path', os.path.join(root, vid))
         num_frames = len(os.listdir(os.path.join(root, vid)))
+        #num_frames = len(os.listdir(root+ '/' + vid+'.mp4'))
+        
+        #TODO:mine
+        # cap = cv2.VideoCapture(os.path.join(root, vid)+'.mp4')
+        # num_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        
+        
         if mode == 'flow':
             num_frames = num_frames//2
             
@@ -83,7 +97,7 @@ def make_dataset(split_file, split, root, mode, num_classes=157):
                     label[ann[0], fr] = 1 # binary classification
         dataset.append((vid, label, data[vid]['duration'], num_frames))
         i += 1
-    
+        
     return dataset
 
 
