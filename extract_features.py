@@ -3,6 +3,9 @@ os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
 import sys
 import argparse
 
+import timeit
+start_time = timeit.default_timer()
+
 parser = argparse.ArgumentParser()
 parser.add_argument('-mode', type=str, help='rgb or flow')
 parser.add_argument('-load_model', type=str)
@@ -75,10 +78,12 @@ def run(max_steps=64e3, mode='rgb', root='/ssd2/charades/Charades_v1_rgb', split
                 continue
 
             b,c,t,h,w = inputs.shape
-            if t > 1600:
+            max_len = 1000
+            print('time in line 82=', str(timeit.default_timer() - start_time))
+            if t > max_len:
                 features = []
-                for start in range(1, t-56, 1600):
-                    end = min(t-1, start+1600+56)
+                for start in range(1, t-56, max_len):
+                    end = min(t-1, start+max_len+56)
                     start = max(1, start-48)
                     ip = Variable(torch.from_numpy(inputs.numpy()[:,:,start:end]).cuda(), volatile=True)
                     features.append(i3d.extract_features(ip).squeeze(0).permute(1,2,3,0).data.cpu().numpy())
