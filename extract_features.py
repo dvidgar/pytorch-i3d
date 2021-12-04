@@ -48,6 +48,7 @@ def run(max_steps=64e3, mode='rgb', root='/ssd2/charades/Charades_v1_rgb', split
     print('validation data read')
     
     dataloaders = {'train': dataloader, 'val': val_dataloader}
+    dataloaders = {'val': val_dataloader, 'train': dataloader}
     datasets = {'train': dataset, 'val': val_dataset}
 
     
@@ -63,7 +64,8 @@ def run(max_steps=64e3, mode='rgb', root='/ssd2/charades/Charades_v1_rgb', split
 
     for phase in ['train', 'val']:
         print('starting phase', phase)
-        i3d.train(False)  # Set model to evaluate mode
+        i3d.eval()  #i3d.train(False)  # Set model to evaluate mode
+        print('time in line 68=', str(timeit.default_timer() - start_time))
                 
         tot_loss = 0.0
         tot_loc_loss = 0.0
@@ -78,8 +80,8 @@ def run(max_steps=64e3, mode='rgb', root='/ssd2/charades/Charades_v1_rgb', split
                 continue
 
             b,c,t,h,w = inputs.shape
-            max_len = 1000
-            print('time in line 82=', str(timeit.default_timer() - start_time))
+            max_len = 800
+            print('time in line 84=', str(timeit.default_timer() - start_time))
             if t > max_len:
                 features = []
                 for start in range(1, t-56, max_len):

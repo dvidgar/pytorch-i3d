@@ -76,7 +76,7 @@ def make_dataset(split_file, split, root, mode, num_classes=157):
         if not os.path.exists(os.path.join(root, vid)):
         #if not os.path.exists(os.path.join(root, vid)+'.mp4'):
             continue
-        print('reading path', os.path.join(root, vid))
+        #print('reading path', os.path.join(root, vid))
         num_frames = len(os.listdir(os.path.join(root, vid)))
         #num_frames = len(os.listdir(root+ '/' + vid+'.mp4'))
         
